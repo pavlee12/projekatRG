@@ -51,6 +51,14 @@ struct PointLight {
     float quadratic;
 };
 
+struct DirLight {
+    glm::vec3 direction;
+
+    glm::vec3 ambient;
+    glm::vec3 diffuse;
+    glm::vec3 specular;
+};
+
 struct ProgramState {
     glm::vec3 clearColor = glm::vec3(0);
     bool ImGuiEnabled = false;
@@ -158,20 +166,25 @@ int main() {
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
 
     // build and compile shaders
     // -------------------------
     Shader ourShader("resources/shaders/2.model_lighting.vs", "resources/shaders/2.model_lighting.fs");
-
+    Shader zbunShader("resources/shaders/2.model_lighting.vs", "resources/shaders/blending.fs");
     // load models
     // -----------
-    Model ourModel("resources/objects/backpack/backpack.obj");
+    Model ourModel("resources/objects/source/MyWesternTown/MyWesternTown.fbx");
+    Model zbun("resources/objects/source/bush/source/bush/bush.FBX");
     ourModel.SetShaderTextureNamePrefix("material.");
+    zbun.SetShaderTextureNamePrefix("material.");
 
     PointLight& pointLight = programState->pointLight;
     pointLight.position = glm::vec3(4.0f, 4.0, 0.0);
-    pointLight.ambient = glm::vec3(0.1, 0.1, 0.1);
-    pointLight.diffuse = glm::vec3(0.6, 0.6, 0.6);
+    pointLight.ambient = glm::vec3(1.0, 1.0, 1.0);
+    pointLight.diffuse = glm::vec3(1.0, 1.0, 1.0);
     pointLight.specular = glm::vec3(1.0, 1.0, 1.0);
 
     pointLight.constant = 1.0f;
@@ -179,6 +192,11 @@ int main() {
     pointLight.quadratic = 0.032f;
 
 
+    DirLight direkcionoSvetlo;
+    direkcionoSvetlo.direction = glm::vec3 (1.0, 1.0, 1.0);
+    direkcionoSvetlo.ambient =  glm::vec3 (0.5, 0.5, 0.5);
+    direkcionoSvetlo.diffuse = glm::vec3 (0.7, 0.7, 0.7);
+    direkcionoSvetlo.specular = glm::vec3 (1.0, 1.0, 1.0);
 
     // draw in wireframe
     //glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -201,9 +219,12 @@ int main() {
         // ------
         glClearColor(programState->clearColor.r, programState->clearColor.g, programState->clearColor.b, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
         // don't forget to enable shader before setting uniforms
         ourShader.use();
+        ourShader.setVec3("svetlo.direction", direkcionoSvetlo.direction);
+        ourShader.setVec3("svetlo.ambient", direkcionoSvetlo.ambient);
+        ourShader.setVec3("svetlo.diffuse", direkcionoSvetlo.diffuse);
+        ourShader.setVec3("svetlo.specular", direkcionoSvetlo.specular);
         pointLight.position = glm::vec3(4.0 * cos(currentFrame), 4.0f, 4.0 * sin(currentFrame));
         ourShader.setVec3("pointLight.position", pointLight.position);
         ourShader.setVec3("pointLight.ambient", pointLight.ambient);
@@ -229,6 +250,26 @@ int main() {
         ourShader.setMat4("model", model);
         ourModel.Draw(ourShader);
 
+
+        zbunShader.use();
+        zbunShader.setVec3("DirLight.diffuse", direkcionoSvetlo.diffuse);
+        zbunShader.setVec3("DirLight.specular", direkcionoSvetlo.specular);
+        zbunShader.setVec3("DirLight.direction", direkcionoSvetlo.direction);
+        zbunShader.setVec3("viewPosition", programState->camera.Position);
+        zbunShader.setFloat("material.shininess", 32.0f);
+        zbunShader.setMat4("projection", projection);
+        zbunShader.setMat4("view", view);
+        
+        model = glm::mat4(1.0f);
+        model = glm::translate(model, direkcionoSvetlo.direction);
+        model = glm::scale(model, glm::vec3(0.02f));
+        zbunShader.setMat4("model", model);
+        glEnable(GL_BLEND);
+        zbun.Draw(zbunShader);
+        // sortiras modele po daljini, od odnosu na poziciju, ali samo one koji koriste blending
+        glDisable(GL_BLEND);
+        //zbun.Draw(ourShader);
+        //JESTEE, AL NZM STO JE CRN
         if (programState->ImGuiEnabled)
             DrawImGui(programState);
 
@@ -254,7 +295,7 @@ int main() {
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow *window) {
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -265,6 +306,11 @@ void processInput(GLFWwindow *window) {
         programState->camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         programState->camera.ProcessKeyboard(RIGHT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)
+        programState->camera.ProcessKeyboard(UP, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
+        programState->camera.ProcessKeyboard(DOWN, deltaTime);
+
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -336,7 +382,7 @@ void DrawImGui(ProgramState *programState) {
 }
 
 void key_callback(GLFWwindow *window, int key, int scancode, int action, int mods) {
-    if (key == GLFW_KEY_F1 && action == GLFW_PRESS) {
+    if (key == GLFW_KEY_P && action == GLFW_PRESS) {
         programState->ImGuiEnabled = !programState->ImGuiEnabled;
         if (programState->ImGuiEnabled) {
             programState->CameraMouseMovementUpdateEnabled = false;
