@@ -228,8 +228,12 @@ int main() {
     // -----------
     Model ourModel("resources/objects/source/MyWesternTown/MyWesternTown.fbx");
     Model zbun("resources/objects/source/bush/source/bush/bush.FBX");
+    Model lokomotiva ("resources/objects/source/Loco/Loco.obj");
+
     ourModel.SetShaderTextureNamePrefix("material.");
     zbun.SetShaderTextureNamePrefix("material.");
+    lokomotiva.SetShaderTextureNamePrefix("material.");
+
 
     PointLight& pointLight = programState->pointLight;
     pointLight.position = glm::vec3(4.0f, 4.0, 0.0);
@@ -300,6 +304,12 @@ int main() {
         ourShader.setMat4("model", model);
         ourModel.Draw(ourShader);
 
+        glm::mat4 modelLoco = glm::mat4(1.0f);
+        modelLoco = glm::translate(modelLoco, glm::vec3(-8.15f, 1.75f, 2.3f));
+        modelLoco = glm::rotate(modelLoco, glm::radians(-2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+        modelLoco = glm::scale(modelLoco, glm::vec3(0.008f));
+        ourShader.setMat4("model", modelLoco);
+        lokomotiva.Draw(ourShader);
 
         zbunShader.use();
         zbunShader.setVec3("svetlo.ambient", direkcionoSvetlo.ambient);
