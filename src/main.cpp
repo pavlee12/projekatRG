@@ -163,6 +163,56 @@ int main() {
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init("#version 330 core");
 
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+
+    glFrontFace(GL_CCW);
+    float cubeVertices[] = {
+            // back face
+            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+            0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
+            // front face
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
+            // left face
+            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            // right face
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            // bottom face
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+            0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
+            0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
+            -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
+            -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
+            // top face
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
+            0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
+            -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
+            -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
+    };
+
+
     // configure global opengl state
     // -----------------------------
     glEnable(GL_DEPTH_TEST);
@@ -252,27 +302,36 @@ int main() {
 
 
         zbunShader.use();
-        zbunShader.setVec3("DirLight.diffuse", direkcionoSvetlo.diffuse);
-        zbunShader.setVec3("DirLight.specular", direkcionoSvetlo.specular);
-        zbunShader.setVec3("DirLight.direction", direkcionoSvetlo.direction);
+        zbunShader.setVec3("svetlo.ambient", direkcionoSvetlo.ambient);
+        zbunShader.setVec3("svetlo.diffuse", direkcionoSvetlo.diffuse);
+        zbunShader.setVec3("svetlo.specular", direkcionoSvetlo.specular);
+        zbunShader.setVec3("svetlo.direction", direkcionoSvetlo.direction);
         zbunShader.setVec3("viewPosition", programState->camera.Position);
         zbunShader.setFloat("material.shininess", 32.0f);
         zbunShader.setMat4("projection", projection);
         zbunShader.setMat4("view", view);
-        
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, direkcionoSvetlo.direction);
-        model = glm::scale(model, glm::vec3(0.02f));
-        zbunShader.setMat4("model", model);
-        glEnable(GL_BLEND);
+
+        glm::mat4 modelZbun = glm::mat4 (1.0f);
+        modelZbun = glm::translate(modelZbun, glm::vec3(-3.5f, 2.15f, 5.33f));
+        modelZbun = glm::rotate(modelZbun, glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        modelZbun = glm::scale(modelZbun, glm::vec3(0.02f));
+        zbunShader.setMat4("model", modelZbun);
         zbun.Draw(zbunShader);
+
+
+        //model = glm::mat4(1.0f);
+        //model = glm::translate(model, direkcionoSvetlo.direction);
+        //model = glm::scale(model, glm::vec3(0.02f));
+        //zbunShader.setMat4("model", model);
+
+        glEnable(GL_BLEND);
+        //zbun.Draw(zbunShader);
         // sortiras modele po daljini, od odnosu na poziciju, ali samo one koji koriste blending
         glDisable(GL_BLEND);
         //zbun.Draw(ourShader);
-        //JESTEE, AL NZM STO JE CRN
+
         if (programState->ImGuiEnabled)
             DrawImGui(programState);
-
 
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
