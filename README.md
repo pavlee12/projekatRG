@@ -7,3 +7,4 @@ Da biste se kretali po sceni mozete koristiti sledece dugmice:
 -I za dole
 Pored obaveznih lekcija, implementirao sam i Cubemaps, Hdr, Bloom.
 Hdr moze da se ukljuci/iskljuci pritiskom na dugme "Space".
+Link za video: https://youtu.be/JCC83z2ia0A
